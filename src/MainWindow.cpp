@@ -12,7 +12,7 @@ MainWindow::MainWindow(QWidget *parent):QMainWindow(parent)
 	//托盘
 	QSystemTrayIcon* icon = new QSystemTrayIcon(this);
 	icon->setIcon(QIcon(":/asset/logo.png"));
-	icon->setToolTip("DLSiteHelper");
+	icon->setToolTip("LocalProgramManager");
 	icon->show();
 	connect(icon, &QSystemTrayIcon::activated, this, &MainWindow::onIconClicked);
 	QMenu *menu = new QMenu();
@@ -34,7 +34,7 @@ MainWindow::MainWindow(QWidget *parent):QMainWindow(parent)
 	//C++内部使用setvbuf关闭缓冲，通过-u设置
 	//exe必须用完整路径
 	programs.push_back(new Program("YDLServer","E:/MyWebsiteHelper/Bin/YoutubeDLServer","python", { "-u","__main__.py"},this));
-	programs.push_back(new Program("Test", "E:/MyWebsiteHelper/Bin/DLSiteHelperServer", "E:/MyWebsiteHelper/Bin/DLSiteHelperServer/DLSiteHelperServer.exe", {"-u"},this));
+	programs.push_back(new Program("DLSiteServer", "E:/MyWebsiteHelper/Bin/DLSiteHelperServer", "E:/MyWebsiteHelper/Bin/DLSiteHelperServer/DLSiteHelperServer.exe", {"-u"},this));
 	QTimer* timer = new QTimer(this);
 	timer->setInterval(1000);
 	timer->setSingleShot(false);
