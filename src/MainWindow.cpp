@@ -8,6 +8,7 @@
 #include "TextDialog.h"
 MainWindow::MainWindow(QWidget *parent):QMainWindow(parent)
 {
+	setWindowIcon(QIcon(":/asset/logo.png"));
 	resize(600, 800);
 	//托盘
 	QSystemTrayIcon* icon = new QSystemTrayIcon(this);
@@ -31,10 +32,11 @@ MainWindow::MainWindow(QWidget *parent):QMainWindow(parent)
 	table->setColumnWidth(Col_Status, 40);
 	//init
 	//python需要使用-u关闭stdout缓冲，否则不能及时接收到输出
-	//C++内部使用setvbuf关闭缓冲，通过-u设置
-	//exe必须用完整路径
+	//C++内部使用setvbuf关闭缓冲，YoutubeDLServer通过-u参数设置
+	//exe必须用完整路径(Why?)
 	programs.push_back(new Program("YDLServer","E:/MyWebsiteHelper/Bin/YoutubeDLServer","python", { "-u","__main__.py"},this));
 	programs.push_back(new Program("DLSiteServer", "E:/MyWebsiteHelper/Bin/DLSiteHelperServer", "E:/MyWebsiteHelper/Bin/DLSiteHelperServer/DLSiteHelperServer.exe", {"-u"},this));
+	programs.push_back(new Program("PixivAss", "E:/MyWebsiteHelper/Bin/PixivAss", "E:/MyWebsiteHelper/Bin/PixivAss/PixivAss.exe", {}, this));
 	QTimer* timer = new QTimer(this);
 	timer->setInterval(1000);
 	timer->setSingleShot(false);
@@ -120,6 +122,6 @@ void MainWindow::onRestart(int row)
 	programs[row]->Restart();
 }
 
-void MainWindow::onShowWindow(int row)
+void MainWindow::onShowWindow(int )
 {
 }

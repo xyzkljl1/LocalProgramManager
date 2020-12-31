@@ -20,3 +20,5 @@ source_files += $$files($$ROOT_DIR/src/*.c)
 HEADERS += $$header_files
 SOURCES += $$source_files
 RESOURCES += $$ROOT_DIR/resource.qrc
+OTHER_FILES += app.rc
+RC_FILE += app.rc
