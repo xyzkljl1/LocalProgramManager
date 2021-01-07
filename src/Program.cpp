@@ -14,7 +14,7 @@ void Program::Stop()
 {
 	if (process)
 	{
-		process->terminate();
+		process->close();
 		process->waitForFinished();
 		delete process;
 		process = nullptr;
@@ -25,6 +25,7 @@ void Program::LocalLog(const QString& message) {
 	log += "--------------------------\n"+
 		name +":"+message+ " on " + QDateTime::currentDateTime().toString() + "\n"
 		"--------------------------\n";
+	emit LogChanged();
 }
 bool Program::Start()
 {
@@ -48,7 +49,14 @@ bool Program::Start()
 
 void Program::Check()
 {
-	//qDebug() << process->state();
+	if (enable)
+	{
+		if ((!process)||process->state() == QProcess::ProcessState::NotRunning )
+			Restart();
+	}
+	else if(process&&process->state() != QProcess::ProcessState::NotRunning)
+		Stop();
+//	qDebug() << process->state();
 }
 
 int Program::PID()
@@ -79,6 +87,7 @@ void Program::OnReadyRead()
 	log += tmp;
 	if (log.length() > 10*10000)
 		log=log.right(10000);
+	emit LogChanged();
 }
 
 void Program::OnFinished(int exitCode, QProcess::ExitStatus exitStatus)

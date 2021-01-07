@@ -27,7 +27,7 @@ protected:
 	void onIconClicked(QSystemTrayIcon::ActivationReason);
 	void onShowLog(int row);
 	void onRestart(int row);
-	void onShowWindow(int row);
+	void onSwitch(int row);
 	void closeEvent(QCloseEvent * event)override;
 	QTableWidget* table=nullptr;
 	std::vector<Program*> programs;

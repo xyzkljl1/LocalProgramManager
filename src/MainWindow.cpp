@@ -1,6 +1,7 @@
 #include "MainWindow.h"
 #include <QMenu>
 #include <QTimer>
+#include <QCheckBox>
 #include <QBoxLayout>
 #include <QPushButton>
 #include <QHeaderView>
@@ -27,18 +28,19 @@ MainWindow::MainWindow(QWidget *parent):QMainWindow(parent)
 	table->setColumnCount(Col_Count);
 	table->setHorizontalHeaderLabels(QStringList{"Name","Path","PID","Living","Status","Op"});
 	table->horizontalHeader()->setSectionsClickable(false);
-	table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+	table->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
 	table->setColumnWidth(Col_Pid, 20);
 	table->setColumnWidth(Col_Status, 40);
 	//init
 	//python需要使用-u关闭stdout缓冲，否则不能及时接收到输出
 	//C++内部使用setvbuf关闭缓冲，YoutubeDLServer通过-u参数设置
 	//exe必须用完整路径(Why?)
-	programs.push_back(new Program("YDLServer","E:/MyWebsiteHelper/Bin/YoutubeDLServer","python", { "-u","__main__.py"},this));
-	programs.push_back(new Program("DLSiteServer", "E:/MyWebsiteHelper/Bin/DLSiteHelperServer", "E:/MyWebsiteHelper/Bin/DLSiteHelperServer/DLSiteHelperServer.exe", {"-u"},this));
+	programs.push_back(new Program("Video Downloader","E:/MyWebsiteHelper/Bin/YoutubeDLServer","python", { "-u","__main__.py"},this));
+	programs.push_back(new Program("DLSite Downloader", "E:/MyWebsiteHelper/Bin/DLSiteHelperServer", "E:/MyWebsiteHelper/Bin/DLSiteHelperServer/DLSiteHelperServer.exe", {"-u"},this));
 	programs.push_back(new Program("PixivAss", "E:/MyWebsiteHelper/Bin/PixivAss", "E:/MyWebsiteHelper/Bin/PixivAss/PixivAss.exe", {}, this));
+	programs.push_back(new Program("SSR", "E:/MyWebsiteHelper/Bin/ShadowSocksR", "E:/MyWebsiteHelper/Bin/ShadowSocksR/ShadowsocksR-dotnet4.0.exe", {}, this));
 	QTimer* timer = new QTimer(this);
-	timer->setInterval(1000);
+	timer->setInterval(3000);
 	timer->setSingleShot(false);
 	connect(timer, &QTimer::timeout, this, &MainWindow::RegularMaintain);
 	timer->start();
@@ -59,14 +61,15 @@ void MainWindow::initTable()
 		widget->setContentsMargins(0,0,0,0);
 		auto layout = new QHBoxLayout(widget);
 		layout->setContentsMargins(0, 0, 0, 0);
-		auto btn_0 = new QPushButton("W");
+		auto btn_0 = new QCheckBox("Valid");
+		btn_0->setChecked(true);
 		auto btn_1 = new QPushButton("R");
 		auto btn_2 = new QPushButton("L");
 		layout->addWidget(btn_0);
 		layout->addWidget(btn_1);
 		layout->addWidget(btn_2);
 		table->setCellWidget(row, Col_Button, widget);
-		connect(btn_0, &QPushButton::clicked, this, std::bind(&MainWindow::onShowWindow, this, row));
+		connect(btn_0, &QCheckBox::stateChanged, this, std::bind(&MainWindow::onSwitch, this, row));
 		connect(btn_1, &QPushButton::clicked, this, std::bind(&MainWindow::onRestart, this, row));
 		connect(btn_2, &QPushButton::clicked, this, std::bind(&MainWindow::onShowLog, this, row));
 	}
@@ -80,7 +83,7 @@ void MainWindow::updateTable() {
 	{
 		//名字和路径不会改变
 		table->item(row, Col_Pid)->setText(QString("%1").arg(programs[row]->PID()));
-		auto t = programs[row]->start_time.secsTo(QDateTime::currentDateTime());
+		auto t = programs[row]->enable?programs[row]->start_time.secsTo(QDateTime::currentDateTime()):0;
 		table->item(row, Col_Living)->setText(QString("%1:%2:%3").arg(t/3600).arg((t/60)%60).arg(t%60));
 		table->item(row, Col_Status)->setText(programs[row]->StatusText());
 	}
@@ -101,19 +104,13 @@ void MainWindow::closeEvent(QCloseEvent * e)
 void MainWindow::RegularMaintain()
 {
 	for (unsigned int i = 0; i < programs.size(); ++i)
-	{
-		Program* program = programs[i];
-		if (!program->process)//启动
-			program->Start();
-		else
-			program->Check();
-	}
+		programs[i]->Check();
 	updateTable();
 }
 
 void MainWindow::onShowLog(int row)
 {
-	auto dialog = new TextDialog(programs[row]->log, this);
+	auto dialog = new TextDialog(programs[row], this);
 	dialog->show();
 }
 
@@ -122,6 +119,7 @@ void MainWindow::onRestart(int row)
 	programs[row]->Restart();
 }
 
-void MainWindow::onShowWindow(int )
+void MainWindow::onSwitch(int row)
 {
+	programs[row]->enable = !programs[row]->enable;
 }

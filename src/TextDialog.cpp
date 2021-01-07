@@ -1,12 +1,18 @@
 #include "TextDialog.h"
 #include <QBoxLayout>
-#include <QTextEdit>
-TextDialog::TextDialog(const QByteArray&_data, QWidget *parent):
-QDialog(parent),data(_data)
+#include <QByteArray>
+TextDialog::TextDialog(Program* _program, QWidget *parent):
+QDialog(parent),program(_program)
 {
 	auto layout = new QHBoxLayout(this);
-	auto editor = new QTextEdit();
+	editor = new QTextEdit();
 	layout->addWidget(editor);
-	editor->setText(_data);
 	setAttribute(Qt::WA_DeleteOnClose, true);
+	OnLogChanged();
+	connect(program, &Program::LogChanged, this, &TextDialog::OnLogChanged);
+}
+
+void TextDialog::OnLogChanged()
+{
+	editor->setText(program->log);
 }
