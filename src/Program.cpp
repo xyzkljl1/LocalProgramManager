@@ -22,9 +22,9 @@ void Program::Stop()
 	}
 }
 void Program::LocalLog(const QString& message) {
-	log += "--------------------------\n"+
+	log += ("--------------------------\n"+
 		name +":"+message+ " on " + QDateTime::currentDateTime().toString() + "\n"
-		"--------------------------\n";
+		"--------------------------\n").toLocal8Bit();
 	emit LogChanged();
 }
 bool Program::Start()

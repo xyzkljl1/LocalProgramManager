@@ -1,6 +1,7 @@
 #include "TextDialog.h"
 #include <QBoxLayout>
 #include <QByteArray>
+#include <QScrollBar>
 TextDialog::TextDialog(Program* _program, QWidget *parent):
 QDialog(parent),program(_program)
 {
@@ -14,5 +15,7 @@ QDialog(parent),program(_program)
 
 void TextDialog::OnLogChanged()
 {
-	editor->setText(program->log);
+	int tmp=editor->verticalScrollBar()->sliderPosition();
+	editor->setText(QString::fromLocal8Bit(program->log));
+	editor->verticalScrollBar()->setSliderPosition(tmp);
 }
