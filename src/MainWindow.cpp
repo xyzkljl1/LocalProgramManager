@@ -1,4 +1,6 @@
 #include "MainWindow.h"
+#include <windows.h>
+#include <Winuser.h>
 #include <QMenu>
 #include <QTimer>
 #include <QCheckBox>
@@ -92,7 +94,10 @@ void MainWindow::updateTable() {
 void MainWindow::onIconClicked(QSystemTrayIcon::ActivationReason reason)
 {
 	if (reason == QSystemTrayIcon::ActivationReason::DoubleClick)
+	{
 		setVisible(!isVisible());
+		SetWindowPos((HWND)winId(), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
+	}
 }
 
 void MainWindow::closeEvent(QCloseEvent * e)
