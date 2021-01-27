@@ -95,8 +95,13 @@ void MainWindow::onIconClicked(QSystemTrayIcon::ActivationReason reason)
 {
 	if (reason == QSystemTrayIcon::ActivationReason::DoubleClick)
 	{
-		setVisible(!isVisible());
-		SetWindowPos((HWND)winId(), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
+		if (isVisible())
+			setVisible(false);
+		else
+		{
+			setVisible(true);
+			SetWindowPos((HWND)winId(), HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
+		}
 	}
 }
 
