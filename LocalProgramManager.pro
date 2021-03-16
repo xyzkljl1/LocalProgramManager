@@ -1,13 +1,13 @@
 TEMPLATE = app
 CONFIG += c++11 qt
 QT += core gui widgets
-DESTDIR = $$PWD/bin/$$CONFIG_TYPE
 CONFIG(debug, debug|release): {
     CONFIG_TYPE = Debug
 }
 else:{
     CONFIG_TYPE = Release
 }
+DESTDIR = $$PWD/bin/$$CONFIG_TYPE
 ROOT_DIR = $$PWD
 temp_dir = $$dirname(QMAKESPEC)
 QT_DIR = $$dirname(temp_dir)

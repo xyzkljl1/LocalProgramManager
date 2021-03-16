@@ -26,6 +26,7 @@ protected:
 	void updateTable();
 	void onIconClicked(QSystemTrayIcon::ActivationReason);
 	void onShowLog(int row);
+	void onShowError(int row);
 	void onRestart(int row);
 	void onSwitch(int row);
 	void closeEvent(QCloseEvent * event)override;

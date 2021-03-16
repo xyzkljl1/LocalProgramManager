@@ -12,7 +12,7 @@
 MainWindow::MainWindow(QWidget *parent):QMainWindow(parent)
 {
 	setWindowIcon(QIcon(":/asset/logo.png"));
-	resize(600, 800);
+	resize(1200, 800);
 	//托盘
 	QSystemTrayIcon* icon = new QSystemTrayIcon(this);
 	icon->setIcon(QIcon(":/asset/logo.png"));
@@ -37,10 +37,16 @@ MainWindow::MainWindow(QWidget *parent):QMainWindow(parent)
 	//python需要使用-u关闭stdout缓冲，否则不能及时接收到输出
 	//C++内部使用setvbuf关闭缓冲，YoutubeDLServer通过-u参数设置
 	//exe必须用完整路径(Why?)
+#ifndef _DEBUG
 	programs.push_back(new Program("Video Downloader","E:/MyWebsiteHelper/Bin/YoutubeDLServer","python", { "-u","__main__.py"},this));
 	programs.push_back(new Program("DLSite Downloader", "E:/MyWebsiteHelper/Bin/DLSiteHelperServer", "E:/MyWebsiteHelper/Bin/DLSiteHelperServer/DLSiteHelperServer.exe", {"-u"},this));
 	programs.push_back(new Program("PixivAss", "E:/MyWebsiteHelper/Bin/PixivAss", "E:/MyWebsiteHelper/Bin/PixivAss/PixivAss.exe", {}, this));
 	programs.push_back(new Program("SSR", "E:/MyWebsiteHelper/Bin/ShadowSocksR", "E:/MyWebsiteHelper/Bin/ShadowSocksR/ShadowsocksR-dotnet4.0.exe", {}, this));
+#else
+	programs.push_back(new Program("Test", "E:/MyWebsiteHelper/TmpProject/TmpProject/Debug", "E:/MyWebsiteHelper/TmpProject/TmpProject/Debug/Project1.exe", {"-u"}, this));
+#endif
+	for (auto& program : programs)
+		connect(program, &Program::signalErrorChanged, this, &MainWindow::updateTable);
 	QTimer* timer = new QTimer(this);
 	timer->setInterval(3000);
 	timer->setSingleShot(false);
@@ -67,13 +73,16 @@ void MainWindow::initTable()
 		btn_0->setChecked(true);
 		auto btn_1 = new QPushButton("R");
 		auto btn_2 = new QPushButton("L");
+		auto btn_3 = new QPushButton("E");
 		layout->addWidget(btn_0);
 		layout->addWidget(btn_1);
 		layout->addWidget(btn_2);
+		layout->addWidget(btn_3);
 		table->setCellWidget(row, Col_Button, widget);
 		connect(btn_0, &QCheckBox::stateChanged, this, std::bind(&MainWindow::onSwitch, this, row));
 		connect(btn_1, &QPushButton::clicked, this, std::bind(&MainWindow::onRestart, this, row));
 		connect(btn_2, &QPushButton::clicked, this, std::bind(&MainWindow::onShowLog, this, row));
+		connect(btn_3, &QPushButton::clicked, this, std::bind(&MainWindow::onShowError, this, row));
 	}
 }
 
@@ -88,6 +97,10 @@ void MainWindow::updateTable() {
 		auto t = programs[row]->enable?programs[row]->start_time.secsTo(QDateTime::currentDateTime()):0;
 		table->item(row, Col_Living)->setText(QString("%1:%2:%3").arg(t/3600).arg((t/60)%60).arg(t%60));
 		table->item(row, Col_Status)->setText(programs[row]->StatusText());
+		QColor color = programs[row]->has_error ? QColor(222, 22, 22) : QColor(255, 255, 255,0);
+		for (int col = 0; col < (int)Col_Count; ++col)
+			if(table->item(row,col))
+				table->item(row, col)->setBackgroundColor(color);
 	}
 }
 
@@ -120,10 +133,16 @@ void MainWindow::RegularMaintain()
 
 void MainWindow::onShowLog(int row)
 {
-	auto dialog = new TextDialog(programs[row], this);
+	auto dialog = new TextDialog(programs[row],QProcess::StandardOutput, this);
 	dialog->show();
 }
 
+void MainWindow::onShowError(int row)
+{
+	auto dialog = new TextDialog(programs[row], QProcess::StandardError, this);
+	dialog->show();
+	programs[row]->ClearError();
+}
 void MainWindow::onRestart(int row)
 {
 	programs[row]->Restart();
