@@ -12,7 +12,6 @@ QDialog(parent),program(_program),channel(_channel)
 	OnLogChanged();
 	connect(program, &Program::signalLogChanged, this, &TextDialog::OnLogChanged);
 	resize(600, 900);
-	editor->verticalScrollBar()->triggerAction(QAbstractSlider::SliderAction::SliderToMaximum);
 	editor->setAcceptRichText(true);
 }
 
@@ -23,4 +22,10 @@ void TextDialog::OnLogChanged()
 	text.replace("\n", "<br>");
 	editor->setHtml(text);
 	editor->verticalScrollBar()->setSliderPosition(tmp);
+}
+
+void TextDialog::showEvent(QShowEvent *e)
+{
+	QDialog::showEvent(e);
+	editor->verticalScrollBar()->triggerAction(QAbstractSlider::SliderAction::SliderToMaximum);
 }

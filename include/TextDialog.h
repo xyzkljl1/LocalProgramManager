@@ -8,6 +8,7 @@ public:
 	TextDialog(Program* program, QProcess::ProcessChannel channel,QWidget *parent = nullptr);
 protected:
 	void OnLogChanged();
+	void showEvent(QShowEvent *) override;
 protected:
 	QTextEdit* editor;
 	QProcess::ProcessChannel channel;

@@ -43,7 +43,8 @@ MainWindow::MainWindow(QWidget *parent):QMainWindow(parent)
 	programs.push_back(new Program("PixivAss", "E:/MyWebsiteHelper/Bin/PixivAss", "E:/MyWebsiteHelper/Bin/PixivAss/PixivAss.exe", {}, this));
 	programs.push_back(new Program("SSR", "E:/MyWebsiteHelper/Bin/ShadowSocksR", "E:/MyWebsiteHelper/Bin/ShadowSocksR/ShadowsocksR-dotnet4.0.exe", {}, this));
 #else
-	programs.push_back(new Program("Test", "E:/MyWebsiteHelper/TmpProject/TmpProject/Debug", "E:/MyWebsiteHelper/TmpProject/TmpProject/Debug/Project1.exe", {"-u"}, this));
+//	programs.push_back(new Program("Test", "E:/MyWebsiteHelper/TmpProject/TmpProject/Debug", "E:/MyWebsiteHelper/TmpProject/TmpProject/Debug/Project1.exe", {"-u"}, this));
+	programs.push_back(new Program("Test", "E:/MyWebsiteHelper/QtConsoleApplication1/x64/Release", "E:/MyWebsiteHelper/QtConsoleApplication1/x64/Release/QtConsoleApplication1.exe", { }, this));
 #endif
 	for (auto& program : programs)
 		connect(program, &Program::signalErrorChanged, this, &MainWindow::updateTable);
