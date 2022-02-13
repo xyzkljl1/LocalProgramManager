@@ -38,9 +38,11 @@ MainWindow::MainWindow(QWidget *parent):QMainWindow(parent)
 	//C++内部使用setvbuf关闭缓冲，YoutubeDLServer通过-u参数设置
 	//exe必须用完整路径(Why?)
 #ifndef _DEBUG
-	programs.push_back(new Program("Video Downloader","E:/MyWebsiteHelper/Bin/YoutubeDLServer","python", { "-u","__main__.py"},this));
+	programs.push_back(new Program("MyDownloader","E:/MyWebsiteHelper/Bin/MyWebDownloadServer","python", { "-u","__main__.py"},this));
 	programs.push_back(new Program("DLSite Downloader", "E:/MyWebsiteHelper/Bin/DLSiteHelperServer", "E:/MyWebsiteHelper/Bin/DLSiteHelperServer/DLSiteHelperServer.exe", {"-u"},this));
 	programs.push_back(new Program("PixivAss", "E:/MyWebsiteHelper/Bin/PixivAss", "E:/MyWebsiteHelper/Bin/PixivAss/PixivAss.exe", {}, this));
+	programs.push_back(new Program("JASMR Downloader", "E:/MyWebsiteHelper/Bin/MySpider/japaneseasmr.com", "E:/MyWebsiteHelper/Bin/MySpider/japaneseasmr.com/japaneseasmr.com.exe", { "-u" }, this));
+	programs.push_back(new Program("ASMRONE Downloader", "E:/MyWebsiteHelper/Bin/MySpider/asmr.one", "E:/MyWebsiteHelper/Bin/MySpider/asmr.one/asmr.one.exe", { "-u" }, this));
 	programs.push_back(new Program("SSR", "E:/MyWebsiteHelper/Bin/ShadowSocksR", "E:/MyWebsiteHelper/Bin/ShadowSocksR/ShadowsocksR-dotnet4.0.exe", {}, this));
 #else
 //	programs.push_back(new Program("Test", "E:/MyWebsiteHelper/TmpProject/TmpProject/Debug", "E:/MyWebsiteHelper/TmpProject/TmpProject/Debug/Project1.exe", {"-u"}, this));
