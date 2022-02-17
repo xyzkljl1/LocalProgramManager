@@ -43,10 +43,12 @@ MainWindow::MainWindow(QWidget *parent):QMainWindow(parent)
 	programs.push_back(new Program("PixivAss", "E:/MyWebsiteHelper/Bin/PixivAss", "E:/MyWebsiteHelper/Bin/PixivAss/PixivAss.exe", {}, this));
 	programs.push_back(new Program("JASMR Downloader", "E:/MyWebsiteHelper/Bin/MySpider/japaneseasmr.com", "E:/MyWebsiteHelper/Bin/MySpider/japaneseasmr.com/japaneseasmr.com.exe", { "-u" }, this));
 	programs.push_back(new Program("ASMRONE Downloader", "E:/MyWebsiteHelper/Bin/MySpider/asmr.one", "E:/MyWebsiteHelper/Bin/MySpider/asmr.one/asmr.one.exe", { "-u" }, this));
-	programs.push_back(new Program("SSR", "E:/MyWebsiteHelper/Bin/ShadowSocksR", "E:/MyWebsiteHelper/Bin/ShadowSocksR/ShadowsocksR-dotnet4.0.exe", {}, this));
+	//IDM不能用此程序管理,启动的进程会变为not running从而导致一直重启
+//	programs.push_back(new Program("IDM", "C:/Program Files (x86)/Internet Download Manager" , "C:/Program Files (x86)/Internet Download Manager/IDMan.exe", {}, this));
 #else
-//	programs.push_back(new Program("Test", "E:/MyWebsiteHelper/TmpProject/TmpProject/Debug", "E:/MyWebsiteHelper/TmpProject/TmpProject/Debug/Project1.exe", {"-u"}, this));
-	programs.push_back(new Program("Test", "E:/MyWebsiteHelper/QtConsoleApplication1/x64/Release", "E:/MyWebsiteHelper/QtConsoleApplication1/x64/Release/QtConsoleApplication1.exe", { }, this));
+	programs.push_back(new Program("Test", "E:/MyWebsiteHelper/TmpProject/TmpProject/Debug", "E:/MyWebsiteHelper/TmpProject/TmpProject/Debug/Project1.exe", {"-u"}, this));
+	//programs.push_back(new Program("IDM", "C:/Program Files (x86)/Internet Download Manager", "C:/Program Files (x86)/Internet Download Manager/IDMan.exe", {"-Embedding"}, this));
+	//programs.push_back(new Program("Test", "E:/MyWebsiteHelper/QtConsoleApplication1/x64/Release", "E:/MyWebsiteHelper/QtConsoleApplication1/x64/Release/QtConsoleApplication1.exe", { }, this));
 #endif
 	for (auto& program : programs)
 		connect(program, &Program::signalErrorChanged, this, &MainWindow::updateTable);
