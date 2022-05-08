@@ -114,7 +114,7 @@ void MainWindow::onIconClicked(QSystemTrayIcon::ActivationReason reason)
 	if (reason == QSystemTrayIcon::ActivationReason::DoubleClick)
 	{
 		if (isVisible())
-			setVisible(false);
+			hideAndCloseChildDialog();
 		else
 		{
 			setVisible(true);
@@ -123,10 +123,17 @@ void MainWindow::onIconClicked(QSystemTrayIcon::ActivationReason reason)
 	}
 }
 
+void MainWindow::hideAndCloseChildDialog()
+{
+	for (auto dialog : this->findChildren<TextDialog*>())
+		dialog->close();
+	hide();
+}
+
 void MainWindow::closeEvent(QCloseEvent * e)
 {
 	e->ignore();
-	hide();
+	hideAndCloseChildDialog();
 }
 
 void MainWindow::RegularMaintain()
@@ -157,3 +164,4 @@ void MainWindow::onSwitch(int row)
 {
 	programs[row]->enable = !programs[row]->enable;
 }
+

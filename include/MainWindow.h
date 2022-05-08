@@ -29,6 +29,7 @@ protected:
 	void onShowError(int row);
 	void onRestart(int row);
 	void onSwitch(int row);
+	void hideAndCloseChildDialog();
 	void closeEvent(QCloseEvent * event)override;
 	QTableWidget* table=nullptr;
 	std::vector<Program*> programs;
