@@ -11,6 +11,7 @@
 #include "TextDialog.h"
 MainWindow::MainWindow(QWidget *parent):QMainWindow(parent)
 {
+	const static QString RootDir = "E:/MyWebsiteHelper/Bin/"; // 必须以/结尾
 	setWindowIcon(QIcon(":/asset/logo.png"));
 	resize(1200, 800);
 	//托盘
@@ -38,17 +39,17 @@ MainWindow::MainWindow(QWidget *parent):QMainWindow(parent)
 	//C++内部使用setvbuf关闭缓冲，YoutubeDLServer通过-u参数设置
 	//exe必须用完整路径(Why?)
 #ifndef _DEBUG
-	programs.push_back(new Program("MyDownloader","E:/MyWebsiteHelper/Bin/MyWebDownloadServer","python", { "-u","__main__.py"},this));
-	programs.push_back(new Program("DLSite Downloader", "E:/MyWebsiteHelper/Bin/DLSiteHelperServer", "E:/MyWebsiteHelper/Bin/DLSiteHelperServer/DLSiteHelperServer.exe", {"-u"},this));
-	programs.push_back(new Program("PixivAss", "E:/MyWebsiteHelper/Bin/PixivAss", "E:/MyWebsiteHelper/Bin/PixivAss/PixivAss.exe", {}, this));
-	programs.push_back(new Program("JASMR Downloader", "E:/MyWebsiteHelper/Bin/MySpider/japaneseasmr.com", "E:/MyWebsiteHelper/Bin/MySpider/japaneseasmr.com/japaneseasmr.com.exe", { "-u" }, this));
-	programs.push_back(new Program("ASMRONE Downloader", "E:/MyWebsiteHelper/Bin/MySpider/asmr.one", "E:/MyWebsiteHelper/Bin/MySpider/asmr.one/asmr.one.exe", { "-u" }, this));
+	// .开头的exe路径表示在程序目录下(rootdir+name)，否则为绝对目录
+	programs.push_back(new Program("MyDownloader","E:/MyWebsiteHelper/MyWebDownloadServer/", RootDir, "C:/Users/xyzkl/AppData/Local/Programs/Python/Python37/python.exe", {"-u","__main__.py"}, this));
+	programs.push_back(new Program("DLSite Downloader", "E:/MyWebsiteHelper/DLSiteHelperServer/x64/Release/", RootDir, "./DLSiteHelperServer.exe", {"-u"},this));
+	programs.push_back(new Program("PictureSpider", "E:/MyWebsiteHelper/PictureSpider/PictureSpider/bin/Release/net8.0-windows10.0.22621.0/", RootDir, "./PictureSpider.exe", {}, this));
+	programs.push_back(new Program("ASMRONE Downloader", "E:/MyWebsiteHelper/MySpider/asmr.one/bin/Release/net8.0/", RootDir, "./asmr.one.exe", { "-u" }, this));
 	//IDM不能用此程序管理,启动的进程会变为not running从而导致一直重启
 //	programs.push_back(new Program("IDM", "C:/Program Files (x86)/Internet Download Manager" , "C:/Program Files (x86)/Internet Download Manager/IDMan.exe", {}, this));
+	//绕过SNI的本地代理,配置文件在同目录config.toml
+	programs.push_back(new Program("Accesser(SNI Bypass)", "E:/MyWebsiteHelper/Accesser/", RootDir, "E:/Python310/python.exe", { "-u","accesser.py" }, this,true));
 #else
-	programs.push_back(new Program("Test", "E:/MyWebsiteHelper/TmpProject/TmpProject/Debug", "E:/MyWebsiteHelper/TmpProject/TmpProject/Debug/Project1.exe", {"-u"}, this));
-	//programs.push_back(new Program("IDM", "C:/Program Files (x86)/Internet Download Manager", "C:/Program Files (x86)/Internet Download Manager/IDMan.exe", {"-Embedding"}, this));
-	//programs.push_back(new Program("Test", "E:/MyWebsiteHelper/QtConsoleApplication1/x64/Release", "E:/MyWebsiteHelper/QtConsoleApplication1/x64/Release/QtConsoleApplication1.exe", { }, this));
+	programs.push_back(new Program("MyDownloader", "E:/MyWebsiteHelper/MyWebDownloadServer/", RootDir, "C:/Users/xyzkl/AppData/Local/Programs/Python/Python37/python.exe", { "-u","__main__.py" }, this));
 #endif
 	for (auto& program : programs)
 		connect(program, &Program::signalErrorChanged, this, &MainWindow::updateTable);
@@ -79,15 +80,18 @@ void MainWindow::initTable()
 		auto btn_1 = new QPushButton("R");
 		auto btn_2 = new QPushButton("L");
 		auto btn_3 = new QPushButton("E");
+		auto btn_4 = new QPushButton("F");
 		layout->addWidget(btn_0);
 		layout->addWidget(btn_1);
 		layout->addWidget(btn_2);
 		layout->addWidget(btn_3);
+		layout->addWidget(btn_4);
 		table->setCellWidget(row, Col_Button, widget);
 		connect(btn_0, &QCheckBox::stateChanged, this, std::bind(&MainWindow::onSwitch, this, row));
 		connect(btn_1, &QPushButton::clicked, this, std::bind(&MainWindow::onRestart, this, row));
 		connect(btn_2, &QPushButton::clicked, this, std::bind(&MainWindow::onShowLog, this, row));
 		connect(btn_3, &QPushButton::clicked, this, std::bind(&MainWindow::onShowError, this, row));
+		connect(btn_4, &QPushButton::clicked, this, std::bind(&MainWindow::onFetch, this, row));
 	}
 }
 
@@ -155,9 +159,15 @@ void MainWindow::onShowError(int row)
 	dialog->show();
 	programs[row]->ClearError();
 }
+
 void MainWindow::onRestart(int row)
 {
 	programs[row]->Restart();
+}
+
+void MainWindow::onFetch(int row)
+{
+	programs[row]->Fetch();
 }
 
 void MainWindow::onSwitch(int row)

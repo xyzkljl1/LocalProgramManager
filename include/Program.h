@@ -9,10 +9,11 @@ class Program:public QObject
 {
 	Q_OBJECT
 public:
-	Program(const QString& _name, const QString& _work_dir, const QString& _cmd,const QStringList& _args,QObject* parent=nullptr);
+	Program(const QString& _name, const QString& source_dir, const QString& _work_dir, const QString& _cmd,const QStringList& _args,QObject* parent=nullptr,bool ignoreLogError=false);
 	bool Start();
 	void Stop();
 	bool Restart() { return Start(); }
+	bool Fetch();
 	void Check();
 	int PID();
 	QString StatusText();
@@ -26,8 +27,10 @@ protected:
 	void OnFinished(int exitCode, QProcess::ExitStatus exitStatus);
 public:
 	bool enable = true;
+	bool ignore_log_error=false;
 	int check_ct=0;
 	QString name;
+	QString source_dir;
 	QString work_dir;
 	QString cmd;
 	QStringList args;

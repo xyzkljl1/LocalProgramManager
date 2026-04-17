@@ -1,14 +1,20 @@
 #include "Program.h"
 #include <Windows.h>
 #include <QMenu>
+#include <QMessageBox>
 #include <QTimer>
 #include <QBoxLayout>
 #include <QCloseEvent>
 #include <QDebug>
-Program::Program(const QString& _name, const QString& _work_dir, const QString& _cmd, const QStringList& _args, QObject* parent) :
-	name(_name),work_dir(_work_dir),cmd(_cmd),args(_args),QObject(parent)
+#include <QDir>
+Program::Program(const QString& _name, const QString& _source_dir, const QString& root_dir, const QString& _cmd, const QStringList& _args, QObject* parent,bool ignoreLogError) :
+	name(_name),work_dir(root_dir+_name),args(_args),ignore_log_error(ignoreLogError), source_dir(_source_dir), QObject(parent)
 {
-
+	// ./开头时从workdir下找
+	if (_cmd.startsWith("./") || _cmd.startsWith(".\\"))
+		cmd = work_dir + "/" + _cmd;
+	else
+		cmd = _cmd;
 }
 void Program::Stop()
 {
@@ -43,9 +49,68 @@ bool Program::Start()
 	});*/
 	connect(process, &QProcess::channelReadyRead, this, &Program::OnReadyRead);
 	connect(process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),this,&Program::OnFinished);
-	process->start(cmd,args,QIODevice::ReadOnly);	
+	process->start(cmd, args,QIODevice::ReadOnly);	
 	start_time = QDateTime::currentDateTime();
 	return process->waitForStarted();
+}
+
+// 只要有一个失败就算失败, 返回错误信息
+QString copyDir(const QString& srcPath, const QString& dstPath)
+{
+	QDir srcDir(srcPath);
+	if (!srcDir.exists())
+		return "Src not exist.";
+
+	QDir dstDir(dstPath);
+	if (!dstDir.exists())
+		if (!dstDir.mkpath("."))
+			return "Fail to create dest.";
+
+	// 忽略目录
+	QStringList ignoreDirs = { ".git", ".idea", ".vs", ".github", "__pycache__"};
+
+	QFileInfoList entries = srcDir.entryInfoList(
+		QDir::NoDotAndDotDot | QDir::AllEntries
+	);
+
+	for (const QFileInfo& entry : entries)
+	{
+		QString srcFilePath = entry.absoluteFilePath();
+		QString dstFilePath = dstPath + "/" + entry.fileName();
+
+		if (entry.isDir())
+		{
+			// 忽略指定目录
+			if (ignoreDirs.contains(entry.fileName()))
+				continue;
+
+			auto ret = copyDir(srcFilePath, dstFilePath);
+			if (!ret.isEmpty())
+				return ret;
+		}
+		else
+		{
+			if (QFile::exists(dstFilePath))
+				if (!QFile::remove(dstFilePath))
+					return "Fail to remove " + dstFilePath;
+;
+			if (!QFile::copy(srcFilePath, dstFilePath))
+				return "Fail to copy "+srcFilePath+"->"+dstFilePath;
+		}
+	}
+	return "";
+}
+
+bool Program::Fetch()
+{
+	if (enable)
+	{
+		QMessageBox::information(nullptr, "No", "Stop process before re-fetch");
+		return false;
+	}
+	auto ret = copyDir(source_dir, work_dir);
+	if (!ret.isEmpty())
+		QMessageBox::warning(nullptr, "Error", ret);
 }
 
 void Program::Check()
@@ -98,7 +163,7 @@ void Program::ClearError()
 void Program::OnReadyRead(int channel)
 {
 	QByteArray tmp;
-	if (channel == QProcess::StandardOutput)
+	if (channel == QProcess::StandardOutput || ignore_log_error==true)
 		tmp = process->readAllStandardOutput();
 	else
 	{
@@ -108,10 +173,10 @@ void Program::OnReadyRead(int channel)
 		has_error = true;
 	}
 	log_merged += tmp;
-	if (log_merged.length() > 10*10000)
-		log_merged=log_merged.right(10000);
-	if (log_error.length() > 10 * 10000)
-		log_error = log_error.right(10000);
+	if (log_merged.length() > 10*30000)
+		log_merged=log_merged.right(30000);
+	if (log_error.length() > 10 * 30000)
+		log_error = log_error.right(30000);
 	emit signalLogChanged();
 }
 
