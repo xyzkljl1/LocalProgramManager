@@ -11,6 +11,7 @@ int main(int argc,char**argv) {
 	}
 	//似乎没有必要lock?
 	QApplication app(argc, argv);
+	Program::InitializeLogs();
 	MainWindow window;
 	window.show();
 	QObject::connect(&window, &MainWindow::signalClose, &app, &QApplication::quit);

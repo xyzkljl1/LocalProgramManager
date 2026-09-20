@@ -10,6 +10,7 @@ class Program:public QObject
 	Q_OBJECT
 public:
 	Program(const QString& _name, const QString& source_dir, const QString& _work_dir, const QString& _cmd,const QStringList& _args,QObject* parent=nullptr,bool ignoreLogError=false);
+	static void InitializeLogs();
 	bool Start();
 	void Stop();
 	bool Restart() { return Start(); }
@@ -22,6 +23,7 @@ signals:
 	void signalLogChanged();
 	void signalErrorChanged();
 protected:
+	void AppendLog(const QByteArray& data);
 	void LocalLog(const QString & message);
 	void OnReadyRead(int channel);
 	void OnFinished(int exitCode, QProcess::ExitStatus exitStatus);

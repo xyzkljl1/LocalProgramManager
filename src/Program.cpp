@@ -7,6 +7,67 @@
 #include <QCloseEvent>
 #include <QDebug>
 #include <QDir>
+#include <QCoreApplication>
+#include <QFile>
+#include <QRegularExpression>
+
+namespace {
+QString logDirectory()
+{
+    return QCoreApplication::applicationDirPath() + "/logs";
+}
+}
+
+void Program::InitializeLogs()
+{
+    QDir directory(logDirectory());
+    if (!directory.mkpath("."))
+    {
+        qWarning() << "Cannot create log directory:" << directory.absolutePath();
+        return;
+    }
+
+    const QDate cutoff = QDate::currentDate().addDays(-30);
+    const QRegularExpression pattern(R"(\A(\d{4}-\d{2}-\d{2})_.+\.log\z)");
+    const auto entries = directory.entryInfoList(QDir::Files | QDir::NoSymLinks);
+    for (const QFileInfo& entry : entries)
+    {
+        const auto match = pattern.match(entry.fileName());
+        if (!match.hasMatch())
+            continue;
+        const QDate date = QDate::fromString(match.captured(1), "yyyy-MM-dd");
+        if (date.isValid() && date < cutoff && !QFile::remove(entry.absoluteFilePath()))
+            qWarning() << "Cannot remove expired log:" << entry.absoluteFilePath();
+    }
+}
+
+void Program::AppendLog(const QByteArray& data)
+{
+    if (data.isEmpty())
+        return;
+
+    QDir directory(logDirectory());
+    if (!directory.mkpath("."))
+    {
+        qWarning() << "Cannot create log directory:" << directory.absolutePath();
+        return;
+    }
+
+    QString fileName = name;
+    fileName.replace(QRegularExpression(R"([<>:"/\\|?*\x00-\x1F])"), "_");
+    if (fileName.isEmpty())
+        fileName = "program";
+    fileName = QDate::currentDate().toString("yyyy-MM-dd") + "_" + fileName + ".log";
+    QFile file(directory.filePath(fileName));
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Append))
+    {
+        qWarning() << "Cannot open log file:" << file.fileName() << file.errorString();
+        return;
+    }
+    if (file.write(data) != data.size() || !file.flush())
+        qWarning() << "Cannot write log file:" << file.fileName() << file.errorString();
+}
+
 Program::Program(const QString& _name, const QString& _source_dir, const QString& root_dir, const QString& _cmd, const QStringList& _args, QObject* parent,bool ignoreLogError) :
 	name(_name),work_dir(root_dir+_name),args(_args),ignore_log_error(ignoreLogError), source_dir(_source_dir), QObject(parent)
 {
@@ -28,8 +89,9 @@ void Program::Stop()
 	}
 }
 void Program::LocalLog(const QString& message) {
-	auto text = ("<font color=\"#0000FF\">" +
-		name +":"+message+ " on " + QDateTime::currentDateTime().toString() + "</font>\r\n").toLocal8Bit();
+	const auto entry = name + ":" + message + " on " + QDateTime::currentDateTime().toString();
+	AppendLog((entry + "\r\n").toLocal8Bit());
+	auto text = ("<font color=\"#0000FF\">" + entry + "</font>\r\n").toLocal8Bit();
 	log_merged += text;
 	log_error += text;
 	emit signalLogChanged();
@@ -164,10 +226,17 @@ void Program::OnReadyRead(int channel)
 {
 	QByteArray tmp;
 	if (channel == QProcess::StandardOutput || ignore_log_error==true)
+	{
+		// Persist ignored stderr without changing the existing UI/error behavior.
+		if (channel == QProcess::StandardError)
+			AppendLog(process->readAllStandardError());
 		tmp = process->readAllStandardOutput();
+		AppendLog(tmp);
+	}
 	else
 	{
 		tmp = process->readAllStandardError();
+		AppendLog(tmp);
 		log_error += tmp;
 		tmp = "<font color=\"#FF0000\">" + tmp + "</font>";
 		has_error = true;
