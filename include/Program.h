@@ -10,7 +10,7 @@ class Program:public QObject
 	Q_OBJECT
 public:
 	Program(const QString& _name, const QString& source_dir, const QString& _work_dir, const QString& _cmd,const QStringList& _args,QObject* parent=nullptr,bool ignoreLogError=false);
-	static void InitializeLogs();
+	static void InitializeLogs(const QString& directoryPath);
 	bool Start();
 	void Stop();
 	bool Restart() { return Start(); }

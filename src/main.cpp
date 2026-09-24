@@ -16,7 +16,6 @@ int main(int argc,char**argv) {
 	}
 	//似乎没有必要lock?
 	QApplication app(argc, argv);
-	Program::InitializeLogs();
 	MainWindow window;
 	Control::Server controlServer;
 	if (!controlServer.Start([&window](const Control::Request& request) {

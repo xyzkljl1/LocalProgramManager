@@ -7,22 +7,18 @@
 #include <QCloseEvent>
 #include <QDebug>
 #include <QDir>
-#include <QCoreApplication>
 #include <QFile>
 #include <QFileInfo>
 #include <QRegularExpression>
 
 namespace {
-QString logDirectory()
-{
-    return QCoreApplication::applicationDirPath() + "/logs";
+QString programLogDirectory;
 }
 
-}
-
-void Program::InitializeLogs()
+void Program::InitializeLogs(const QString& directoryPath)
 {
-    QDir directory(logDirectory());
+    programLogDirectory = QDir::cleanPath(directoryPath);
+    QDir directory(programLogDirectory);
     if (!directory.mkpath("."))
     {
         qWarning() << "Cannot create log directory:" << directory.absolutePath();
@@ -48,7 +44,7 @@ void Program::AppendLog(const QByteArray& data)
     if (data.isEmpty())
         return;
 
-    QDir directory(logDirectory());
+    QDir directory(programLogDirectory);
     if (!directory.mkpath("."))
     {
         qWarning() << "Cannot create log directory:" << directory.absolutePath();

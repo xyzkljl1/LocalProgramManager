@@ -44,11 +44,13 @@ QString loadPrograms(QObject* parent, std::vector<Program*>& programs)
 
 	const QJsonObject root = document.object();
 	const QString workRootValue = root.value("workRoot").toString();
-	if (workRootValue.isEmpty() || !root.value("programs").isArray())
-		return QStringLiteral("配置文件必须包含 workRoot 和 programs 数组。");
+	const QString logRootValue = root.value("logRoot").toString();
+	if (workRootValue.isEmpty() || logRootValue.isEmpty() || !root.value("programs").isArray())
+		return QStringLiteral("配置文件必须包含 workRoot、logRoot 和 programs 数组。");
 
 	const QDir configDirectory = QFileInfo(configPath).absoluteDir();
 	const QString workRoot = resolveDirectory(configDirectory, workRootValue);
+	const QString logRoot = resolveDirectory(configDirectory, logRootValue);
 	QSet<QString> names;
 	const QJsonArray entries = root.value("programs").toArray();
 	for (int index = 0; index < entries.size(); ++index)
@@ -83,6 +85,7 @@ QString loadPrograms(QObject* parent, std::vector<Program*>& programs)
 			QDir(workRoot).filePath(name), command, arguments, parent,
 			entry.value("ignoreLogError").toBool(false)));
 	}
+	Program::InitializeLogs(logRoot);
 	return {};
 }
 

@@ -1,5 +1,6 @@
 {
   "workRoot": "runtime",
+  "logRoot": "logs",
   "programs": [
     {
       "name": "ExampleProgram",
