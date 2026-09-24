@@ -66,7 +66,6 @@ int RunClient(int argc, char** argv)
     }
 
     QJsonObject request;
-    request["version"] = 1;
     request["command"] = command;
     request["program"] = arguments.mid(3).join(" ");
     const QByteArray requestData = QJsonDocument(request).toJson(QJsonDocument::Compact) + "\n";
