@@ -10,6 +10,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QRegularExpression>
+#include <QThread>
 
 namespace {
 QString programLogDirectory;
@@ -213,10 +214,15 @@ bool Program::Deploy(QString& message)
 	LocalLog("Deploy stopping");
 	Stop();
 	LocalLog("Deploy copying");
-	const QString copyError = copyDir(source_dir, work_dir);
+	QString copyError = copyDir(source_dir, work_dir);
+	for (int retry = 0; !copyError.isEmpty() && retry < 3; ++retry)
+	{
+		QThread::sleep(3);
+		copyError = copyDir(source_dir, work_dir);
+	}
 	if (!copyError.isEmpty())
 	{
-		message = "Deployment copy failed: " + copyError;
+		message = "Deployment copy failed after three retries: " + copyError;
 		if (wasEnabled)
 			message += Start() ? " The program was restarted from the current working directory."
 				: " The program could not be restarted.";
