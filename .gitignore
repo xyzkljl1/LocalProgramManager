@@ -35,3 +35,5 @@
 /debug
 /release
 /config.json
+.qmake.stash
+*.vcxproj.user
