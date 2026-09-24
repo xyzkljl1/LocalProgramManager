@@ -1,19 +1,31 @@
 #include <QApplication>
+#include <QDebug>
 #include <Windows.h>
+#include "Control.h"
 #include "MainWindow.h"
 int main(int argc,char**argv) {
-	//È·±£¸Ã³ÌĞòÖ»»áÔËĞĞÒ»¸ö
+	if (Control::IsControlMode(argc, argv))
+		return Control::RunClient(argc, argv);
+
+	//ç¡®ä¿è¯¥ç¨‹åºåªä¼šè¿è¡Œä¸€ä¸ª
 	auto mutex=CreateMutexA(NULL,true,"{A16999D2-6524-4C7D-B193-60D62F451FEE}");
 	if (GetLastError() == ERROR_ALREADY_EXISTS)
 	{
 		CloseHandle(mutex);
 		return 0;
 	}
-	//ËÆºõÃ»ÓĞ±ØÒªlock?
+	//ä¼¼ä¹æ²¡æœ‰å¿…è¦lock?
 	QApplication app(argc, argv);
 	Program::InitializeLogs();
 	MainWindow window;
+	Control::Server controlServer;
+	if (!controlServer.Start([&window](const Control::Request& request) {
+		return window.HandleControlMessage(request);
+	}))
+		qWarning() << "Cannot start the local control endpoint:" << controlServer.ErrorString();
 	window.show();
 	QObject::connect(&window, &MainWindow::signalClose, &app, &QApplication::quit);
-	return app.exec();
+	const int result = app.exec();
+	CloseHandle(mutex);
+	return result;
 }

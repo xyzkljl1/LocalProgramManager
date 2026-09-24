@@ -3,12 +3,15 @@
 #include <QtWidgets/QSystemTrayIcon>
 //#include <QtWidgets/qtablewidget.h>
 #include <QDateTime>
+#include <QByteArray>
 #include <QTableWidget>
 #include "Program.h"
+namespace Control { struct Request; }
 class MainWindow :public QMainWindow {
 	Q_OBJECT
 public:
 	MainWindow(QWidget *parent = nullptr);
+	QByteArray HandleControlMessage(const Control::Request& request);
 signals:
 	void signalClose();
 protected:

@@ -9,6 +9,7 @@
 #include <QDir>
 #include <QCoreApplication>
 #include <QFile>
+#include <QFileInfo>
 #include <QRegularExpression>
 
 namespace {
@@ -16,6 +17,7 @@ QString logDirectory()
 {
     return QCoreApplication::applicationDirPath() + "/logs";
 }
+
 }
 
 void Program::InitializeLogs()
@@ -173,10 +175,85 @@ bool Program::Fetch()
 	auto ret = copyDir(source_dir, work_dir);
 	if (!ret.isEmpty())
 		QMessageBox::warning(nullptr, "Error", ret);
+	return ret.isEmpty();
+}
+
+bool Program::Deploy(QString& message)
+{
+	if (deploying)
+	{
+		message = "A deployment is already running for this program.";
+		return false;
+	}
+
+	const QString sourcePath = QDir::cleanPath(QDir(source_dir).absolutePath()).replace('\\', '/');
+	const QString workPath = QDir::cleanPath(QDir(work_dir).absolutePath()).replace('\\', '/');
+	if (!QDir(sourcePath).exists())
+	{
+		message = "Source directory does not exist: " + source_dir;
+		return false;
+	}
+	if (sourcePath.compare(workPath, Qt::CaseInsensitive) == 0
+		|| sourcePath.startsWith(workPath + "/", Qt::CaseInsensitive)
+		|| workPath.startsWith(sourcePath + "/", Qt::CaseInsensitive))
+	{
+		message = "Source and working directories must be separate and cannot contain one another.";
+		return false;
+	}
+
+	const QString commandPath = QDir::cleanPath(cmd).replace('\\', '/');
+	if (commandPath.startsWith(workPath + "/", Qt::CaseInsensitive))
+	{
+		const QString relativeCommand = commandPath.mid(workPath.length() + 1);
+		if (!QFileInfo(QDir(sourcePath).filePath(relativeCommand)).isFile())
+		{
+			message = "The source directory does not contain the configured executable: " + relativeCommand;
+			return false;
+		}
+	}
+
+	deploying = true;
+	const bool wasEnabled = enable;
+	LocalLog("Deploy stopping");
+	Stop();
+	LocalLog("Deploy copying");
+	const QString copyError = copyDir(source_dir, work_dir);
+	if (!copyError.isEmpty())
+	{
+		message = "Deployment copy failed: " + copyError;
+		if (wasEnabled)
+			message += Start() ? " The program was restarted from the current working directory."
+				: " The program could not be restarted.";
+		deploying = false;
+		return false;
+	}
+
+	if (wasEnabled)
+	{
+		LocalLog("Deploy starting");
+		const bool started = Start();
+		const bool exitedDuringCheck = started && process && process->waitForFinished(3000);
+		const bool runningAfterCheck = started && process
+			&& !exitedDuringCheck && process->state() == QProcess::Running;
+		if (!runningAfterCheck)
+		{
+			message = "The deployed process did not remain running during the three-second startup check.";
+			deploying = false;
+			return false;
+		}
+	}
+
+	LocalLog("Deploy succeeded");
+	message = wasEnabled ? "Deployment succeeded and the program is running."
+		: "Deployment succeeded; the program remains disabled.";
+	deploying = false;
+	return true;
 }
 
 void Program::Check()
 {
+	if (deploying)
+		return;
 	if (enable)
 	{
 		if ((!process)||process->state() == QProcess::ProcessState::NotRunning )

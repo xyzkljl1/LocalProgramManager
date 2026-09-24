@@ -8,24 +8,27 @@
 #include <QPushButton>
 #include <QHeaderView>
 #include <QCloseEvent>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include "Control.h"
 #include "TextDialog.h"
 MainWindow::MainWindow(QWidget *parent):QMainWindow(parent)
 {
-	const static QString RootDir = "E:/MyWebsiteHelper/Bin/"; // ±ØÐëÒÔ/½áÎ²
+	const static QString RootDir = "E:/MyWebsiteHelper/Bin/"; // å¿…é¡»ä»¥/ç»“å°¾
 	setWindowIcon(QIcon(":/asset/logo.png"));
 	resize(1200, 800);
-	//ÍÐÅÌ
+	//æ‰˜ç›˜
 	QSystemTrayIcon* icon = new QSystemTrayIcon(this);
 	icon->setIcon(QIcon(":/asset/logo.png"));
 	icon->setToolTip("LocalProgramManager");
 	icon->show();
 	connect(icon, &QSystemTrayIcon::activated, this, &MainWindow::onIconClicked);
 	QMenu *menu = new QMenu();
-	QAction *exit_action = new QAction(QString::fromLocal8Bit("ÍË³ö"), menu);
+	QAction *exit_action = new QAction(QStringLiteral("é€€å‡º"), menu);
 	menu->addAction(exit_action);
 	icon->setContextMenu(menu);
 	connect(exit_action, &QAction::triggered, this, &MainWindow::signalClose);
-	//ÁÐ±í
+	//åˆ—è¡¨
 	table = new QTableWidget();
 	setCentralWidget(table);
 	table->setColumnCount(Col_Count);
@@ -35,18 +38,18 @@ MainWindow::MainWindow(QWidget *parent):QMainWindow(parent)
 	table->setColumnWidth(Col_Pid, 20);
 	table->setColumnWidth(Col_Status, 40);
 	//init
-	//pythonÐèÒªÊ¹ÓÃ-u¹Ø±Õstdout»º³å£¬·ñÔò²»ÄÜ¼°Ê±½ÓÊÕµ½Êä³ö
-	//C++ÄÚ²¿Ê¹ÓÃsetvbuf¹Ø±Õ»º³å£¬YoutubeDLServerÍ¨¹ý-u²ÎÊýÉèÖÃ
-	//exe±ØÐëÓÃÍêÕûÂ·¾¶(Why?)
+	//pythonéœ€è¦ä½¿ç”¨-uå…³é—­stdoutç¼“å†²ï¼Œå¦åˆ™ä¸èƒ½åŠæ—¶æŽ¥æ”¶åˆ°è¾“å‡º
+	//C++å†…éƒ¨ä½¿ç”¨setvbufå…³é—­ç¼“å†²ï¼ŒYoutubeDLServeré€šè¿‡-uå‚æ•°è®¾ç½®
+	//exeå¿…é¡»ç”¨å®Œæ•´è·¯å¾„(Why?)
 #ifndef _DEBUG
-	// .¿ªÍ·µÄexeÂ·¾¶±íÊ¾ÔÚ³ÌÐòÄ¿Â¼ÏÂ(rootdir+name)£¬·ñÔòÎª¾ø¶ÔÄ¿Â¼
+	// .å¼€å¤´çš„exeè·¯å¾„è¡¨ç¤ºåœ¨ç¨‹åºç›®å½•ä¸‹(rootdir+name)ï¼Œå¦åˆ™ä¸ºç»å¯¹ç›®å½•
 	programs.push_back(new Program("MyDownloader","E:/MyWebsiteHelper/MyWebDownloadServer/", RootDir, "C:/Users/xyzkl/AppData/Local/Programs/Python/Python37/python.exe", {"-u","__main__.py"}, this));
 	programs.push_back(new Program("DLSite Downloader", "E:/MyWebsiteHelper/DLSiteHelperServer/x64/Release/", RootDir, "./DLSiteHelperServer.exe", {"-u"},this));
 	programs.push_back(new Program("PictureSpider", "E:/MyWebsiteHelper/PictureSpider/PictureSpider/bin/Release/net8.0-windows10.0.22621.0/", RootDir, "./PictureSpider.exe", {}, this));
 	programs.push_back(new Program("ASMRONE Downloader", "E:/MyWebsiteHelper/MySpider/asmr.one/bin/Release/net8.0/", RootDir, "./asmr.one.exe", { "-u" }, this));
-	//IDM²»ÄÜÓÃ´Ë³ÌÐò¹ÜÀí,Æô¶¯µÄ½ø³Ì»á±äÎªnot running´Ó¶øµ¼ÖÂÒ»Ö±ÖØÆô
+	//IDMä¸èƒ½ç”¨æ­¤ç¨‹åºç®¡ç†,å¯åŠ¨çš„è¿›ç¨‹ä¼šå˜ä¸ºnot runningä»Žè€Œå¯¼è‡´ä¸€ç›´é‡å¯
 //	programs.push_back(new Program("IDM", "C:/Program Files (x86)/Internet Download Manager" , "C:/Program Files (x86)/Internet Download Manager/IDMan.exe", {}, this));
-	//ÈÆ¹ýSNIµÄ±¾µØ´úÀí,ÅäÖÃÎÄ¼þÔÚÍ¬Ä¿Â¼config.toml
+	//ç»•è¿‡SNIçš„æœ¬åœ°ä»£ç†,é…ç½®æ–‡ä»¶åœ¨åŒç›®å½•config.toml
 	programs.push_back(new Program("Accesser(SNI Bypass)", "E:/MyWebsiteHelper/Accesser/", RootDir, "E:/Python310/python.exe", { "-u","accesser.py" }, this,true));
 #else
 	programs.push_back(new Program("MyDownloader", "E:/MyWebsiteHelper/MyWebDownloadServer/", RootDir, "C:/Users/xyzkl/AppData/Local/Programs/Python/Python37/python.exe", { "-u","__main__.py" }, this));
@@ -96,12 +99,12 @@ void MainWindow::initTable()
 }
 
 void MainWindow::updateTable() {
-	//programsÊÇÓÐÐòµÄ
+	//programsæ˜¯æœ‰åºçš„
 	if (table->rowCount() != (int)programs.size())
 		initTable();
 	for (int row = 0; row < (int)programs.size(); ++row)
 	{
-		//Ãû×ÖºÍÂ·¾¶²»»á¸Ä±ä
+		//åå­—å’Œè·¯å¾„ä¸ä¼šæ”¹å˜
 		table->item(row, Col_Pid)->setText(QString("%1").arg(programs[row]->PID()));
 		auto t = programs[row]->enable?programs[row]->start_time.secsTo(QDateTime::currentDateTime()):0;
 		table->item(row, Col_Living)->setText(QString("%1:%2:%3").arg(t/3600).arg((t/60)%60).arg(t%60));
@@ -138,6 +141,55 @@ void MainWindow::closeEvent(QCloseEvent * e)
 {
 	e->ignore();
 	hideAndCloseChildDialog();
+}
+
+QByteArray MainWindow::HandleControlMessage(const Control::Request& request)
+{
+	QJsonObject response;
+	response["success"] = false;
+	response["command"] = request.command;
+	if (!request.program.isEmpty())
+		response["program"] = request.program;
+
+	auto finish = [&](int exitCode, const QString& responseMessage) {
+		this->updateTable();
+		response["exitCode"] = exitCode;
+		response["message"] = responseMessage;
+		return QJsonDocument(response).toJson(QJsonDocument::Compact) + "\n";
+	};
+
+	if (request.command != "deploy" && request.command != "restart")
+		return finish(Control::InvalidArguments, "Unsupported control command.");
+
+	Program* selected = nullptr;
+	for (auto program : programs)
+	{
+		if (program->name.compare(request.program, Qt::CaseInsensitive) == 0)
+		{
+			selected = program;
+			break;
+		}
+	}
+	if (!selected)
+		return finish(Control::ProgramNotFound, "Unknown program name.");
+
+	response["program"] = selected->name;
+	if (selected->deploying)
+		return finish(Control::AlreadyDeploying, "A deployment is already running for this program.");
+
+	if (request.command == "restart")
+	{
+		const bool restarted = selected->Restart();
+		response["success"] = restarted;
+		response["pid"] = selected->PID();
+		return finish(restarted ? Control::Success : Control::OperationFailed,
+			restarted ? "Program restarted." : "Program failed to restart.");
+	}
+	QString deployMessage;
+	const bool deployed = selected->Deploy(deployMessage);
+	response["success"] = deployed;
+	response["pid"] = selected->PID();
+	return finish(deployed ? Control::Success : Control::OperationFailed, deployMessage);
 }
 
 void MainWindow::RegularMaintain()

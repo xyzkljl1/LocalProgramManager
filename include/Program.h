@@ -15,6 +15,7 @@ public:
 	void Stop();
 	bool Restart() { return Start(); }
 	bool Fetch();
+	bool Deploy(QString& message);
 	void Check();
 	int PID();
 	QString StatusText();
@@ -29,6 +30,7 @@ protected:
 	void OnFinished(int exitCode, QProcess::ExitStatus exitStatus);
 public:
 	bool enable = true;
+	bool deploying = false;
 	bool ignore_log_error=false;
 	int check_ct=0;
 	QString name;
@@ -36,7 +38,7 @@ public:
 	QString work_dir;
 	QString cmd;
 	QStringList args;
-	QByteArray log_merged;//stdout+stderr,∞¥ ±º‰À≥–Ú
+	QByteArray log_merged;//stdout+stderr,ÊåâÊó∂Èó¥È°∫Â∫è
 	QByteArray log_error;//stderr
 	bool has_error=false;
 	QDateTime start_time;
