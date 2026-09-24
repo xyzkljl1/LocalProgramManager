@@ -135,7 +135,8 @@
       <QtRccFileName>qrc_%(Filename).cpp</QtRccFileName>
     </QtRcc>
     <PostBuildEvent>
-      <Command>copy /Y "$(QTDIR)\bin\Qt5Network.dll" "$(OutDir)Qt5Network.dll"</Command>
+      <Command>copy /Y "$(QTDIR)\bin\Qt5Network.dll" "$(OutDir)Qt5Network.dll"
+if exist "$(ProjectDir)config.json" copy /Y "$(ProjectDir)config.json" "$(OutDir)config.json"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -193,7 +194,8 @@
       <QtRccFileName>qrc_%(Filename).cpp</QtRccFileName>
     </QtRcc>
     <PostBuildEvent>
-      <Command>copy /Y "$(QTDIR)\bin\Qt5Networkd.dll" "$(OutDir)Qt5Networkd.dll"</Command>
+      <Command>copy /Y "$(QTDIR)\bin\Qt5Networkd.dll" "$(OutDir)Qt5Networkd.dll"
+if exist "$(ProjectDir)config.json" copy /Y "$(ProjectDir)config.json" "$(OutDir)config.json"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -234,6 +236,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="asset\logo.png" />
+    <None Include="config.example.json" />
     <QtRcc Include="resource.qrc">
     </QtRcc>
   </ItemGroup>

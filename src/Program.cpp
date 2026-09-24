@@ -70,8 +70,8 @@ void Program::AppendLog(const QByteArray& data)
         qWarning() << "Cannot write log file:" << file.fileName() << file.errorString();
 }
 
-Program::Program(const QString& _name, const QString& _source_dir, const QString& root_dir, const QString& _cmd, const QStringList& _args, QObject* parent,bool ignoreLogError) :
-	name(_name),work_dir(root_dir+_name),args(_args),ignore_log_error(ignoreLogError), source_dir(_source_dir), QObject(parent)
+Program::Program(const QString& _name, const QString& _source_dir, const QString& _work_dir, const QString& _cmd, const QStringList& _args, QObject* parent,bool ignoreLogError) :
+	name(_name),work_dir(_work_dir),args(_args),ignore_log_error(ignoreLogError), source_dir(_source_dir), QObject(parent)
 {
 	// ./开头时从workdir下找
 	if (_cmd.startsWith("./") || _cmd.startsWith(".\\"))

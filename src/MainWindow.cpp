@@ -8,13 +8,88 @@
 #include <QPushButton>
 #include <QHeaderView>
 #include <QCloseEvent>
+#include <QCoreApplication>
+#include <QDir>
+#include <QFile>
+#include <QFileInfo>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QMessageBox>
+#include <QSet>
 #include "Control.h"
 #include "TextDialog.h"
+
+namespace {
+
+QString resolveDirectory(const QDir& configDirectory, const QString& path)
+{
+	return QDir::cleanPath(QDir::isRelativePath(path)
+		? configDirectory.absoluteFilePath(path) : path);
+}
+
+QString loadPrograms(QObject* parent, std::vector<Program*>& programs)
+{
+	const QString configPath = QDir(QCoreApplication::applicationDirPath()).filePath("config.json");
+	QFile file(configPath);
+	if (!file.open(QIODevice::ReadOnly))
+		return QStringLiteral("无法读取配置文件：%1\n%2").arg(configPath, file.errorString());
+
+	QJsonParseError parseError;
+	const QJsonDocument document = QJsonDocument::fromJson(file.readAll(), &parseError);
+	if (parseError.error != QJsonParseError::NoError)
+		return QStringLiteral("配置文件不是有效的 JSON：%1").arg(parseError.errorString());
+	if (!document.isObject())
+		return QStringLiteral("配置文件根节点必须是对象。");
+
+	const QJsonObject root = document.object();
+	const QString workRootValue = root.value("workRoot").toString();
+	if (workRootValue.isEmpty() || !root.value("programs").isArray())
+		return QStringLiteral("配置文件必须包含 workRoot 和 programs 数组。");
+
+	const QDir configDirectory = QFileInfo(configPath).absoluteDir();
+	const QString workRoot = resolveDirectory(configDirectory, workRootValue);
+	QSet<QString> names;
+	const QJsonArray entries = root.value("programs").toArray();
+	for (int index = 0; index < entries.size(); ++index)
+	{
+		if (!entries[index].isObject())
+			return QStringLiteral("programs[%1] 必须是对象。").arg(index);
+		const QJsonObject entry = entries[index].toObject();
+		const QString name = entry.value("name").toString();
+		const QString sourceDir = entry.value("sourceDir").toString();
+		const QString command = entry.value("command").toString();
+		if (name.isEmpty() || sourceDir.isEmpty() || command.isEmpty())
+			return QStringLiteral("programs[%1] 必须包含 name、sourceDir 和 command。").arg(index);
+
+		const QString nameKey = name.toCaseFolded();
+		if (names.contains(nameKey))
+			return QStringLiteral("程序名称不能重复：%1").arg(name);
+		names.insert(nameKey);
+
+		const QJsonValue argumentsValue = entry.value("arguments");
+		if (!argumentsValue.isUndefined() && !argumentsValue.isArray())
+			return QStringLiteral("程序 %1 的 arguments 必须是数组。").arg(name);
+		QStringList arguments;
+		for (const QJsonValue argument : argumentsValue.toArray())
+		{
+			if (!argument.isString())
+				return QStringLiteral("程序 %1 的 arguments 只能包含字符串。").arg(name);
+			arguments.push_back(argument.toString());
+		}
+
+		programs.push_back(new Program(name,
+			resolveDirectory(configDirectory, sourceDir),
+			QDir(workRoot).filePath(name), command, arguments, parent,
+			entry.value("ignoreLogError").toBool(false)));
+	}
+	return {};
+}
+
+}
+
 MainWindow::MainWindow(QWidget *parent):QMainWindow(parent)
 {
-	const static QString RootDir = "E:/MyWebsiteHelper/Bin/"; // 必须以/结尾
 	setWindowIcon(QIcon(":/asset/logo.png"));
 	resize(1200, 800);
 	//托盘
@@ -37,23 +112,14 @@ MainWindow::MainWindow(QWidget *parent):QMainWindow(parent)
 	table->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
 	table->setColumnWidth(Col_Pid, 20);
 	table->setColumnWidth(Col_Status, 40);
-	//init
-	//python需要使用-u关闭stdout缓冲，否则不能及时接收到输出
-	//C++内部使用setvbuf关闭缓冲，YoutubeDLServer通过-u参数设置
-	//exe必须用完整路径(Why?)
-#ifndef _DEBUG
-	// .开头的exe路径表示在程序目录下(rootdir+name)，否则为绝对目录
-	programs.push_back(new Program("MyDownloader","E:/MyWebsiteHelper/MyWebDownloadServer/", RootDir, "C:/Users/xyzkl/AppData/Local/Programs/Python/Python37/python.exe", {"-u","__main__.py"}, this));
-	programs.push_back(new Program("DLSite Downloader", "E:/MyWebsiteHelper/DLSiteHelperServer/x64/Release/", RootDir, "./DLSiteHelperServer.exe", {"-u"},this));
-	programs.push_back(new Program("PictureSpider", "E:/MyWebsiteHelper/PictureSpider/PictureSpider/bin/Release/net8.0-windows10.0.22621.0/", RootDir, "./PictureSpider.exe", {}, this));
-	programs.push_back(new Program("ASMRONE Downloader", "E:/MyWebsiteHelper/MySpider/asmr.one/bin/Release/net8.0/", RootDir, "./asmr.one.exe", { "-u" }, this));
-	//IDM不能用此程序管理,启动的进程会变为not running从而导致一直重启
-//	programs.push_back(new Program("IDM", "C:/Program Files (x86)/Internet Download Manager" , "C:/Program Files (x86)/Internet Download Manager/IDMan.exe", {}, this));
-	//绕过SNI的本地代理,配置文件在同目录config.toml
-	programs.push_back(new Program("Accesser(SNI Bypass)", "E:/MyWebsiteHelper/Accesser/", RootDir, "E:/Python310/python.exe", { "-u","accesser.py" }, this,true));
-#else
-	programs.push_back(new Program("MyDownloader", "E:/MyWebsiteHelper/MyWebDownloadServer/", RootDir, "C:/Users/xyzkl/AppData/Local/Programs/Python/Python37/python.exe", { "-u","__main__.py" }, this));
-#endif
+	const QString configError = loadPrograms(this, programs);
+	if (!configError.isEmpty())
+	{
+		for (auto* program : programs)
+			delete program;
+		programs.clear();
+		QMessageBox::critical(this, QStringLiteral("配置错误"), configError);
+	}
 	for (auto& program : programs)
 		connect(program, &Program::signalErrorChanged, this, &MainWindow::updateTable);
 	QTimer* timer = new QTimer(this);

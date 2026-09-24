@@ -89,6 +89,9 @@
     <None Include="asset\logo.png">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="config.example.json">
+      <Filter>Resource Files</Filter>
+    </None>
     <QtRcc Include="resource.qrc">
       <Filter>Resource Files</Filter>
     </QtRcc>

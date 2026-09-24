@@ -1,0 +1,12 @@
+{
+  "workRoot": "runtime",
+  "programs": [
+    {
+      "name": "ExampleProgram",
+      "sourceDir": "build/ExampleProgram",
+      "command": "./ExampleProgram.exe",
+      "arguments": [],
+      "ignoreLogError": false
+    }
+  ]
+}
