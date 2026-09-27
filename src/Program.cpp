@@ -127,9 +127,6 @@ QString copyDir(const QString& srcPath, const QString& dstPath)
 		if (!dstDir.mkpath("."))
 			return "Fail to create dest.";
 
-	// 忽略目录
-	QStringList ignoreDirs = { ".git", ".idea", ".vs", ".github", "__pycache__"};
-
 	QFileInfoList entries = srcDir.entryInfoList(
 		QDir::NoDotAndDotDot | QDir::AllEntries
 	);
@@ -141,8 +138,7 @@ QString copyDir(const QString& srcPath, const QString& dstPath)
 
 		if (entry.isDir())
 		{
-			// 忽略指定目录
-			if (ignoreDirs.contains(entry.fileName()))
+			if (entry.fileName().startsWith('.') || entry.fileName() == "__pycache__")
 				continue;
 
 			auto ret = copyDir(srcFilePath, dstFilePath);
